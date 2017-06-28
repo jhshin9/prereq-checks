@@ -144,11 +144,11 @@ function check_network() {
   fi
 
   # http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/install_cdh_disable_iptables.html
-  if is_centos_rhel_7; then 
+  if is_centos_rhel_7; then
     _check_service_is_not_running 'Network' 'firewalld'
   else
     _check_service_is_not_running 'Network' 'iptables'
-  fi 
+  fi
   _check_service_is_running     'Network' 'nscd'
   _check_service_is_not_running 'Network' 'sssd'
 }
@@ -261,7 +261,7 @@ function check_only_64bit_packages_installed() {
 function check_ntpd_sync() {
   ntpstat > /dev/null
   if [ $? -gt 0 ]; then
-    state "System: NTPD is not synchronized - Please investigate" 1
+    state "System: ntpd is not synchronized - Please investigate" 1
   else
     limit=1000   # Set limit in milliseconds
     offsets=$(ntpstat | tail -n +2 | head -n 1 | cut -c 27- | tr -d ' ms')
@@ -273,9 +273,9 @@ function check_ntpd_sync() {
       fi
     done
     if [ "$is_unsync" = true ]; then
-      state "System: NTPD is not synchronized - Please investigate" 1
+      state "System: ntpd is not synchronized - Please investigate" 1
     else
-      state "System: NTPD is synchronized." 0
+      state "System: ntpd is synchronized" 0
     fi
   fi
 }
@@ -288,15 +288,16 @@ function checks() {
     ntpd_used="$(_validate_service_state 'System' 'ntpd')"
     if [ $ntpd_used -eq 0 ]; then
       _check_service_is_running 'System' 'ntpd'
+      check_ntpd_sync
     else
     # Add check to see if chrony is actually synchronizing the clock. Use the command "chronyc tracking"
       _check_service_is_running     'System' 'chronyd'
     fi
   else
     _check_service_is_running 'System' 'ntpd'
+    check_ntpd_sync
   fi
 
-  check_ntpd_sync
   check_network
   check_java
   check_database
